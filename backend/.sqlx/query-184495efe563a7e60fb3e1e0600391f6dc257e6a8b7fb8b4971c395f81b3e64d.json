@@ -1,0 +1,56 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT\n            COUNT(*)                                              AS \"total_calls!: i64\",\n            COUNT(*) FILTER (WHERE status = 'error')              AS \"error_count!: i64\",\n            COALESCE(AVG(latency_ms)::float8, 0)                  AS \"avg_latency_ms!: f64\",\n            COALESCE(SUM(input_tokens), 0)                        AS \"total_input_tokens!: i64\",\n            COALESCE(SUM(output_tokens), 0)                       AS \"total_output_tokens!: i64\",\n            COUNT(*) FILTER (WHERE created_at > NOW() - INTERVAL '1 hour')\n                                                                  AS \"calls_last_hour!: i64\",\n            percentile_cont(0.95) WITHIN GROUP (ORDER BY latency_ms)\n                                                                  AS p95_latency_ms\n        FROM inference_logs\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "total_calls!: i64",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "error_count!: i64",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 2,
+        "name": "avg_latency_ms!: f64",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 3,
+        "name": "total_input_tokens!: i64",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 4,
+        "name": "total_output_tokens!: i64",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 5,
+        "name": "calls_last_hour!: i64",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 6,
+        "name": "p95_latency_ms",
+        "type_info": "Float8"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  "hash": "184495efe563a7e60fb3e1e0600391f6dc257e6a8b7fb8b4971c395f81b3e64d"
+}

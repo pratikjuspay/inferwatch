@@ -1,0 +1,4 @@
+# Backend container copies its own .env? No — compose injects env vars.
+target/
+.sqlx_temp/
+.env

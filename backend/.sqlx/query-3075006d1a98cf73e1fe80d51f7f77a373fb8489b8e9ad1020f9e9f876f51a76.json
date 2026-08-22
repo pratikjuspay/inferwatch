@@ -1,0 +1,24 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        INSERT INTO inference_logs (\n            conversation_id, message_id, model, provider,\n            latency_ms, input_tokens, output_tokens,\n            status, error_msg, input_preview, output_preview\n        )\n        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Text",
+        "Text",
+        "Int8",
+        "Int4",
+        "Int4",
+        "Text",
+        "Text",
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "3075006d1a98cf73e1fe80d51f7f77a373fb8489b8e9ad1020f9e9f876f51a76"
+}
