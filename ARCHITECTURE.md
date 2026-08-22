@@ -41,7 +41,7 @@ The SDK is the toll-booth camera, not a form the driver fills:
 - handlers call `sdk.complete(...)` and get a token stream back; logging is invisible
 - it is **impossible** to make an LLM call through the app without a `LogEvent` firing
 - channel full → drop with a `tracing::warn`, never block the chat path
-- previews capped at 500 chars (cost + privacy tradeoff vs full payload capture)
+- previews pass through `sdk/redact.rs` **before** persistence: regex rules turn emails / phones / card numbers / key-shaped strings into `[REDACTED:*]`, and only then is the preview capped at 500 chars — redact-then-cap so a hard boundary can never slice a sensitive token in half (cost + privacy tradeoff vs full payload capture; unit-tested rules)
 
 ### Why a channel + worker instead of Kafka
 
@@ -113,7 +113,7 @@ Decisions and why:
 
 ## With more time
 
-- PII redaction in the SDK preview stage (regex + patterns catalog) before anything touches persistence
+- context-aware PII detection (NER model) — the shipped `redact.rs` covers emails/phones/cards/key shapes by regex
 - conversation cancel endpoint + `watch::channel` cancellation through pumps
 - prompt template/version columns on logs (replay a conversation against a different provider)
 - provider-per-request routing in `AppState` (provider registry) + dashboard split

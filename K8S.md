@@ -45,6 +45,14 @@ Teardown: `minikube delete` (or `kubectl delete namespace inferwatch`).
 ## Notes / honest limitations
 
 - **Image arch**: images are arch-specific — `minikube image load` works on the machine that built them; on a different arch (e.g. amd64 CI), rebuild with `eval $(minikube docker-env)` first.
+- **Iterating on the same machine**: `minikube image load` does **not** reliably overwrite an existing `:latest` tag. The verified loop is versioned tags:
+  ```bash
+  docker build -t inferwatch-backend:vN ./backend
+  minikube image load inferwatch-backend:vN
+  kubectl -n inferwatch set image deployment/backend backend=inferwatch-backend:vN
+  kubectl -n inferwatch rollout status deployment/backend
+  ```
+- **Rollout gotcha**: while a rolling update is mid-flight, pods of BOTH images may be `Running` briefly — the Service routes to both. Wait for `rollout status` to finish AND the old pod to leave `get pods` before verifying new code.
 - Postgres runs as a single replica with `Recreate` strategy — fine for a demo; production would be a StatefulSet or managed DB.
 - `imagePullPolicy: IfNotPresent` everywhere + a real registry push is the production path (the demo never needs Docker Hub).
 - Scaling the backend >1 replica works as-is (stateless); the single ingestion worker per pod stays independent per pod — that's the "scaling notes" story in ARCHITECTURE.md (shared durable queue when a second consumer appears).

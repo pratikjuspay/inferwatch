@@ -4,7 +4,23 @@
 
 A working chat app is just the vehicle — the real system observes every LLM call, captures structured telemetry (latency, tokens, model, provider, status) without the request path noticing, and stores it reliably. Ships with a live metrics dashboard.
 
-**Stack:** Rust (Axum + Tokio + SQLx) · SvelteKit (TS) · PostgreSQL · Docker Compose · Gemini/OpenAI (env-swappable)
+**Stack:** Rust (Axum + Tokio + SQLx) · SvelteKit (TS) · PostgreSQL · Docker Compose · Kubernetes · Gemini/OpenAI (env-swappable)
+
+---
+
+## Features
+
+- **Auto-instrumented SDK wrapper** — handlers call `sdk.complete()`; latency, tokens, model, status and previews are captured invisibly — **one `LogEvent` per call, success or failure**. No handler code can make an unlogged LLM call.
+- **Multi-provider** — `LlmProvider` trait with real Gemini + OpenAI implementations; switch with one env var (`LLM_PROVIDER`), zero code changes.
+- **True streaming** — SSE from provider bytes all the way to browser tokens (manual SSE-over-POST parsing on the client).
+- **Event-driven ingestion** — bounded tokio mpsc channel (10k) + dedicated worker task; DB writes never touch the chat path.
+- **PII redaction** — emails, phone numbers, card numbers and secret-shaped strings become `[REDACTED:*]` *before* previews persist (redact-then-cap; unit-tested).
+- **Live metrics dashboard** — calls, error rate, avg/p95 latency, tokens, calls/hour; 5s polling, gradient latency chart, raw log rows.
+- **Conversations** — persisted, auto-titled, resumable across refreshes, last-20-message context window.
+- **Errors as first-class telemetry** — provider 401/429/503/404 become structured log rows visible on the dashboard, never swallowed.
+- **One-command Docker Compose** — db + migrations + backend + frontend, with port-conflict-friendly host mappings.
+- **Self-hosted Kubernetes** — minikube/kind manifests + runbook ([K8S.md](./K8S.md)), verified end-to-end in-cluster.
+- **Tested** — `cargo test` covers redaction rules, char-safe truncation and the preview pipeline.
 
 ---
 

@@ -40,6 +40,7 @@ graph TD
         end
 
         SDK["sdk/mod.rs<br/>InstrumentedProvider + LogEvent"]
+        RED["sdk/redact.rs<br/>(PII → [REDACTED:*])"]
         WORK["ingestion/worker.rs"]
 
         MAIN --> STATE
@@ -58,6 +59,7 @@ graph TD
         METR -->|uses| STATE & ERR
 
         SDK --> PMOD
+        SDK --> RED
         PMOD --> GEM & OAI
         WORK -.->|"consumes LogEvent"| SDK
         WORK --> DBL
@@ -107,7 +109,7 @@ sequenceDiagram
     end
     G-->>PR: final frame (usageMetadata)
     PR-->>SDK: StreamChunk::Done{in,out}
-    SDK->>BUS: try_send(LogEvent) — fires 1st
+    SDK->>BUS: try_send(LogEvent) — previews already PII-redacted — fires 1st
     SDK-->>CH: forwarded Done — browser gets it 2nd
     CH->>DB: UPDATE assistant row with full content
     CH-->>B: SSE data: {type:"done", …} then stream closes
@@ -156,7 +158,8 @@ Any of steps B–F fails → process refuses to boot (no half-up server).
 | `providers/mod.rs` | neutral language: ChatMessage, StreamChunk, trait | futures, serde |
 | `providers/gemini.rs` | knows how Google speaks (roles, SSE frames, usage) | reqwest |
 | `providers/openai.rs` | knows how OpenAI speaks | reqwest |
-| `sdk/mod.rs` | accountant: wraps calls, fires ONE LogEvent per call | providers/, channel |
+| `sdk/mod.rs` | accountant: wraps calls, fires ONE LogEvent per call | providers/, channel, redact |
+| `sdk/redact.rs` | censor: regex PII rules → `[REDACTED:*]`, then cap | regex (unit-tested) |
 | `ingestion/worker.rs` | mailbox collector: drains channel → one INSERT per event | db/, channel |
 | `db/conversations.rs` | SQL for conversations table | sqlx |
 | `db/messages.rs` | SQL for messages (incl. pre-generated IDs) | sqlx |

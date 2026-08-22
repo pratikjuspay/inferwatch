@@ -1,9 +1,12 @@
 use crate::providers::{ChatMessage, LlmError, LlmProvider, LlmStream, StreamChunk};
 use futures::StreamExt;
+use redact::preview;
 use std::sync::Arc;
 use std::time::Instant;
 use tokio_stream::wrappers::ReceiverStream;
 use uuid::Uuid;
+
+mod redact;
 
 /// Everything the ingestion worker needs to write one inference_logs row.
 /// Fired once per LLM call — success OR failure.
@@ -60,7 +63,7 @@ impl InstrumentedProvider {
         // preview of what we sent (last user message, capped)
         let input_preview = messages
             .last()
-            .map(|m| truncate(&m.content, 500));
+            .map(|m| preview(&m.content, 500));
 
         let stream_result = self.inner.complete_stream(messages).await;
 
@@ -77,7 +80,7 @@ impl InstrumentedProvider {
                     input_tokens: None,
                     output_tokens: None,
                     status: "error".into(),
-                    error_msg: Some(e.to_string()),
+                    error_msg: Some(redact::redact(&e.to_string())),
                     input_preview,
                     output_preview: None,
                 };
@@ -122,7 +125,7 @@ impl InstrumentedProvider {
                                 status: "success".into(),
                                 error_msg: None,
                                 input_preview: input_preview.clone(),
-                                output_preview: Some(truncate(&output, 500)),
+                                output_preview: Some(preview(&output, 500)),
                             },
                         );
 
@@ -142,9 +145,9 @@ impl InstrumentedProvider {
                                 input_tokens: usage_input,
                                 output_tokens: usage_output,
                                 status: "error".into(),
-                                error_msg: Some(e.to_string()),
+                                error_msg: Some(redact::redact(&e.to_string())),
                                 input_preview: input_preview.clone(),
-                                output_preview: Some(truncate(&output, 500)),
+                                output_preview: Some(preview(&output, 500)),
                             },
                         );
                         let _ = tx.send(Err(e)).await;
@@ -172,4 +175,29 @@ fn fire(tx: &tokio::sync::mpsc::Sender<LogEvent>, event: LogEvent) {
 
 fn truncate(s: &str, max: usize) -> String {
     s.chars().take(max).collect()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::redact::{preview, redact};
+
+    #[test]
+    fn truncate_is_char_safe() {
+        assert_eq!(super::truncate("नमस्ते", 3), "नमस");
+    }
+
+    #[test]
+    fn sdk_preview_path_redacts() {
+        let p = preview("reach me at someone@example.com", 500);
+        assert!(!p.contains('@'));
+        assert!(p.contains("[REDACTED:email]"));
+    }
+
+    #[test]
+    fn error_msg_redacts() {
+        assert_eq!(
+            redact("provider 400: key sk-verysecret123 refused"),
+            "provider 400: key [REDACTED:secret] refused"
+        );
+    }
 }

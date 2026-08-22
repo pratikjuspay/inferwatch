@@ -44,3 +44,6 @@ dotenvy = "0.15"
 tokio-stream = "0.1"
 futures = "0.3"
 async-trait = "0.1"
+
+# PII redaction for log previews
+regex = "1"
