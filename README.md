@@ -8,6 +8,18 @@ A working chat app is just the vehicle — the real system observes every LLM ca
 
 ---
 
+## Demo
+
+🎥 **[Watch the demo video](docs/DemoVideo.mp4)** — streaming chat → live dashboard → error telemetry captured (a real failed call from a bad API key).
+
+| Live dashboard | Chat with memory |
+|---|---|
+| ![Dashboard — cards with totals/error rate/latency, chart, raw log rows](docs/Dashboard.png) | ![Chat — streaming replies, multi-turn memory](docs/Chat.png) |
+| **Conversations** (persist + resume) | **Fresh chat** (⌄ welcome screen, composer) |
+| ![Conversations list](docs/Conversations.png) | ![Fresh chat screen](docs/HeroScreen.png) |
+
+---
+
 ## Quick start
 
 ### One command (Docker)
