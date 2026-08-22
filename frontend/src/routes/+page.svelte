@@ -46,22 +46,22 @@
 		chatEl?.scrollTo({ top: chatEl.scrollHeight, behavior: 'smooth' });
 	});
 
-	// resume: ?c=<id> when coming from the list, else most recent
+	// resume ONLY when ?c=<id> is present (from the conversations list or a
+	// refresh after sending). Plain "/" is always a fresh chat.
 	onMount(async () => {
 		const wanted = new URLSearchParams(location.search).get('c');
-		const convos = await listConversations($sessionId);
-		const target = wanted ?? convos[0]?.id;
-		if (target && convos.some((c) => c.id === target)) {
-			const detail = await getConversation(target, $sessionId);
-			conversationId = detail.id;
-			messages = detail.messages.filter((m) => !(m.role === 'assistant' && !m.content));
-		}
+		if (!wanted) return;
+		const detail = await getConversation(wanted, $sessionId);
+		conversationId = detail.id;
+		messages = detail.messages.filter((m) => !(m.role === 'assistant' && !m.content));
 	});
 
 	async function ensureConversation(): Promise<string> {
 		if (conversationId) return conversationId;
 		const c = await createConversation($sessionId);
 		conversationId = c.id;
+		// stick the id in the URL so a refresh resumes THIS chat, not a fresh one
+		history.replaceState(null, '', `/?c=${c.id}`);
 		return c.id;
 	}
 
