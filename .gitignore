@@ -4,3 +4,6 @@ node_modules/
 
 # OpenCode session transcripts (local only, may contain secrets)
 opencode_chat*.jsonl
+
+# internal build checklist (not for reviewers)
+IMPLEMENTATION_PLAN.md

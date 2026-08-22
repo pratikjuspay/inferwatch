@@ -6,7 +6,9 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: inferwatch
     ports:
-      - "5432:5432"
+      # Host default 5433 so a locally-running Postgres (5432) never clashes.
+      # Only for humans peeking at the DB — backend reaches db:5432 internally.
+      - "${DB_PORT:-5433}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -28,6 +30,7 @@ services:
       OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini}
       RUST_LOG: info,backend=info
     ports:
+      # Pinned: the frontend image bakes http://localhost:3001 at build time.
       - "3001:3001"
     depends_on:
       db:
@@ -39,7 +42,9 @@ services:
       PORT: 5173
       ORIGIN: http://localhost:5173
     ports:
-      - "5173:5173"
+      # Safe to move: FRONTEND_PORT=8080 docker compose up
+      # (browser talks straight to the backend; CORS is open)
+      - "${FRONTEND_PORT:-5173}:5173"
     depends_on:
       - backend
 
