@@ -88,4 +88,5 @@ SSE event shapes: `{"type":"token","content":…}`, `{"type":"done","message_id"
 ## Documentation
 
 - **[ARCHITECTURE.md](./ARCHITECTURE.md)** — system design, ingestion flow, schema decisions, tradeoffs, failure handling, scaling
+- **[K8S.md](./K8S.md)** — self-hosted Kubernetes deployment (minikube/kind manifests + port-forward, verified on minikube v1.38)
 - **[FILE_MAP.md](./FILE_MAP.md)** — file-level dependency map (mermaid) + request lifecycle sequence diagram
