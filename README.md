@@ -22,6 +22,20 @@ A working chat app is just the vehicle — the real system observes every LLM ca
 - **Self-hosted Kubernetes** — minikube/kind manifests + runbook ([K8S.md](./K8S.md)), verified end-to-end in-cluster.
 - **Tested** — `cargo test` covers redaction rules, char-safe truncation and the preview pipeline.
 
+### Assignment coverage
+
+| Requirement | Where it lives | Honestly verified by |
+|---|---|---|
+| LLM chatbot + short conversational context | `backend/src/routes/chat.rs` (last-20 history) | demo video, live sessions |
+| Auto-instrumented SDK wrapper | `backend/src/sdk/mod.rs` | impossible to call a provider without a `LogEvent` firing |
+| Event-based ingestion → PostgreSQL | `sdk → mpsc(10k) → ingestion/worker.rs → db/inference_logs.rs` | log rows visible in db + dashboard after every call |
+| Metrics dashboard: latency + throughput + errors | `frontend/dashboard/+page.svelte` (+ `routes/metrics.rs`) | screenshot above |
+| *Bonus* — Multi-provider | `providers/{gemini,openai}.rs` behind `trait LlmProvider` | env flip documented in Quick start |
+| *Bonus* — Streaming | SSE end-to-end (provider → browser) | demo video |
+| *Bonus* — Docker Compose one-command | `docker-compose.yml` | cold start on a fresh volume, twice |
+| *Bonus* — PII redaction | `backend/src/sdk/redact.rs` | `cargo test` (11 tests) + redacted rows in live db |
+| *Bonus* — Self-hosted k8s | `k8s/inferwatch.yaml` + [K8S.md](./K8S.md) | full chat round-trip through the minikube cluster |
+
 ---
 
 ## Demo

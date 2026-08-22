@@ -65,6 +65,18 @@
 		return c.id;
 	}
 
+	// start fresh WITHOUT navigating (linking to "/" while on "/" doesn't remount).
+	// Guarded while sending — an in-flight stream would keep writing to the old array.
+	function newChat() {
+		if (sending) return;
+		conversationId = null;
+		messages = [];
+		input = '';
+		error = '';
+		resetSize();
+		history.replaceState(null, '', '/');
+	}
+
 	async function send() {
 		const text = input.trim();
 		if (!text || sending) return;
@@ -109,7 +121,21 @@
 	}
 </script>
 
-<div class="chat" bind:this={chatEl} aria-live="polite">
+{#if messages.length > 0}
+	<div class="topbar">
+		<button
+			type="button"
+			class="newchat"
+			onclick={newChat}
+			disabled={sending}
+			title={sending ? 'wait for the reply to finish' : 'Start a fresh conversation'}
+		>
+			+ New chat
+		</button>
+	</div>
+{/if}
+
+<div class="chat" class:has-topbar={messages.length > 0} bind:this={chatEl} aria-live="polite">
 	{#if messages.length === 0}
 		<div class="empty">
 			<div class="empty-logo">◉</div>
@@ -191,6 +217,36 @@
 		overflow-y: auto;
 		padding: 0.25rem 0.25rem 1.5rem;
 		scroll-behavior: smooth;
+	}
+
+	/* fresh-chat chip — only visible once a chat exists */
+	.chat.has-topbar {
+		height: calc(100dvh - 245px); /* chip row (~34px) + gap */
+	}
+	.topbar {
+		display: flex;
+		justify-content: flex-end;
+		margin-bottom: 0.45rem;
+	}
+	.newchat {
+		background: transparent;
+		border: 1px solid var(--border-strong);
+		color: var(--accent);
+		font-family: inherit;
+		font-size: 0.8rem;
+		font-weight: 600;
+		padding: 0.35rem 0.9rem;
+		border-radius: 22px;
+		cursor: pointer;
+		transition: border-color 0.15s, background 0.15s;
+	}
+	.newchat:hover:not(:disabled) {
+		border-color: var(--accent);
+		background: var(--accent-soft);
+	}
+	.newchat:disabled {
+		opacity: 0.4;
+		cursor: not-allowed;
 	}
 
 	.empty {
